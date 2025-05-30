@@ -58,14 +58,16 @@ class FaceBox(
     } */
     private val paint = Paint().apply {
 //        color = if (label == "Drowsy") Color.RED else Color.GREEN
-        color = Color.GREEN
+//        color = Color.GREEN
+        color = if (label.contains("Awake")) Color.GREEN else Color.RED
         style = Paint.Style.STROKE
         strokeWidth = 6.0f
     }
 
     private val textPaint = Paint().apply {
 //        color = Color.WHITE
-        color = if (label == "Awake") Color.GREEN else Color.RED
+//        color = if (label == "Awake") Color.GREEN else Color.RED
+        color = if (label.contains("Awake")) Color.GREEN else Color.RED
         textSize = 50f
         style = Paint.Style.FILL
     }
