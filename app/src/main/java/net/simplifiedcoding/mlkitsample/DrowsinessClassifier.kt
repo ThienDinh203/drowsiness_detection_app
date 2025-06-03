@@ -94,7 +94,7 @@ class DrowsinessClassifier(private val context: Context) {
 class DrowsinessClassifier(context: Context) {
 
     private val inputImageSize = 224  // adjust to your model’s input size
-    private val modelPath = "model_stable_v1.tflite"
+    private val modelPath = "drowsiness_detectorV2.tflite"
     private val interpreter: Interpreter
 
     init {
@@ -145,28 +145,30 @@ class DrowsinessClassifier(context: Context) {
     }
 */
 
-    fun classify(bitmap: Bitmap): String {
+    fun classify(bitmap: Bitmap): Int {
         val input = preprocess(bitmap)
         val output = Array(1) { FloatArray(3) } // [closed_eye, normal, Yawn]
         interpreter.run(input, output)
 
-        val awakeProb = output[0][0]
-        val drowsyProb = output[0][1]
+        val closeeyesProb = output[0][0]
+        val awakeProb = output[0][1]
         val yawnProb = output[0][2]
         val highThreshold = 0.5f
 
-        val combinedDrowsy = drowsyProb + yawnProb
+        val combinedDrowsy = closeeyesProb + yawnProb
 
-        val status = if (awakeProb > highThreshold) "Drowsy" else "Awake"
+        val status = if (closeeyesProb > highThreshold) "Drowsy" else "Awake"
 
         Log.d("DinhThien", "Awake: %.2f, Drowsy: %.2f, Ignored Yawning: %.2f → Status: %s".format(
-            awakeProb, drowsyProb, output[0][2], status
+            awakeProb, closeeyesProb, output[0][2], status
         ))
 
+        if(closeeyesProb > highThreshold) return 0;
+        return 1;
 //        return status
-        return "$status (%.0f%%)".format(
-            if (status == "Drowsy") drowsyProb * 100 else awakeProb * 100
-        )
+//        return (
+//            awakeProb * 100
+//        )
     }
 
 }

@@ -39,8 +39,13 @@ class FaceDetectionActivity : AppCompatActivity() {
     private lateinit var imageAnalysis: ImageAnalysis
     private lateinit var drowsinessClassifier: DrowsinessClassifier
 
-    private var awakeCount = 0
-    private var drowsyCount = 0
+//    private var awakeCount = 0
+//    private var drowsyCount = 0
+//    private val frameScores = mutableListOf<Double>()  // Holds 10–12 recent scores
+    private val maxWindowSize = 12
+    private var ema = 0.0;
+    private val alpha = 0.25
+    private val emaThreshold = 0.5
     private val frameStates = mutableListOf<String>()
     private var mediaPlayer: MediaPlayer? = null
 
@@ -53,8 +58,8 @@ class FaceDetectionActivity : AppCompatActivity() {
         drowsinessClassifier = DrowsinessClassifier(this)
 
         cameraSelector =
-            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
-//            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
+//            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
+            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
         cameraXViewModel.value.processCameraProvider.observe(this) { provider ->
             processCameraProvider = provider
             bindCameraPreview()
@@ -101,7 +106,7 @@ class FaceDetectionActivity : AppCompatActivity() {
             Log.e(TAG, illegalArgumentException.message ?: "IllegalArgumentException")
         }
     }
-
+/*
     @OptIn(ExperimentalGetImage::class)
     private fun processImageProxy(detector: FaceDetector, imageProxy: ImageProxy) {
         val inputImage = InputImage.fromMediaImage(imageProxy.image!!, imageProxy.imageInfo.rotationDegrees)
@@ -154,6 +159,68 @@ class FaceDetectionActivity : AppCompatActivity() {
                 imageProxy.close()
             }
     }
+    */
+
+    @OptIn(ExperimentalGetImage::class)
+    private fun processImageProxy(detector: FaceDetector, imageProxy: ImageProxy) {
+        val frameStartTime = System.currentTimeMillis()
+        Log.d("FrameTiming", "⏱ Frame processing started at ${String.format("%.4f", frameStartTime / 60000.0)} min")
+
+        val inputImage = InputImage.fromMediaImage(imageProxy.image!!, imageProxy.imageInfo.rotationDegrees)
+
+        detector.process(inputImage)
+            .addOnSuccessListener { faces ->
+                binding.graphicOverlay.clear()
+
+                faces.forEach { face ->
+                    val modelStartTime = System.currentTimeMillis()
+                    Log.d("ModelTiming", "⚙️ Model classification started at ${String.format("%.4f", modelStartTime / 60000.0)} min")
+
+                    val faceBitmap = cropFaceFromImage(imageProxy.toBitmap(), face.boundingBox)
+                    val status = drowsinessClassifier.classify(faceBitmap)  // "Drowsy (80%)", etc.
+
+                    val modelEndTime = System.currentTimeMillis()
+                    val modelDurationMin = (modelEndTime - modelStartTime) / 60000.0
+                    Log.d("ModelTiming", "✅ Model classification finished at ${String.format("%.4f", modelEndTime / 60000.0)} min")
+                    Log.d("ModelTiming", "⏳ Model processing duration: ${String.format("%.4f", modelDurationMin)} min")
+
+                    val frameScore = status
+
+                    // Only compute EMA if we have enough data
+                    var displayLabel = "Analyzing..."
+                    ema = alpha * frameScore + (1 - alpha) * ema;
+                    Log.d("SlidingEMA", ema.toString())
+                    val finalState = if (ema > emaThreshold) "Awake" else "Drowsy"
+                    displayLabel = finalState
+                    if (finalState == "Drowsy") {
+                        if (mediaPlayer == null) {
+                            mediaPlayer = MediaPlayer.create(this, R.raw.alarm3)
+                            mediaPlayer?.isLooping = false
+                        }
+                        if (mediaPlayer?.isPlaying == false) {
+                            mediaPlayer?.start()
+                        }
+                    } else {
+                        mediaPlayer?.pause()
+                        mediaPlayer?.seekTo(0)
+                    }
+
+                    val faceBox = FaceBox(binding.graphicOverlay, face, imageProxy.image!!.cropRect, displayLabel)
+                    binding.graphicOverlay.add(faceBox)
+                }
+            }
+            .addOnFailureListener {
+                it.printStackTrace()
+            }
+            .addOnCompleteListener {
+                val frameEndTime = System.currentTimeMillis()
+                val frameDurationMin = (frameEndTime - frameStartTime) / 60000.0
+                Log.d("FrameTiming", "✅ Frame processing finished at ${String.format("%.4f", frameEndTime / 60000.0)} min")
+                Log.d("FrameTiming", "🕒 Total frame processing time: ${String.format("%.4f", frameDurationMin)} min")
+                imageProxy.close()
+            }
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()
