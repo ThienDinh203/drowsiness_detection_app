@@ -94,7 +94,7 @@ class DrowsinessClassifier(private val context: Context) {
 class DrowsinessClassifier(context: Context) {
 
     private val inputImageSize = 224  // adjust to your model’s input size
-    private val modelPath = "model_stable_v1.tflite"
+    private val modelPath = "drowsiness_detectorV2.tflite"
     private val interpreter: Interpreter
 
     init {
@@ -126,7 +126,6 @@ class DrowsinessClassifier(context: Context) {
                 byteBuffer.putFloat(((pixel and 0xFF) / 255f))
             }
         }
-
         return byteBuffer
     }
 /*

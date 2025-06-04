@@ -53,8 +53,8 @@ class FaceDetectionActivity : AppCompatActivity() {
         drowsinessClassifier = DrowsinessClassifier(this)
 
         cameraSelector =
-            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
-//            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
+//            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
+            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
         cameraXViewModel.value.processCameraProvider.observe(this) { provider ->
             processCameraProvider = provider
             bindCameraPreview()
