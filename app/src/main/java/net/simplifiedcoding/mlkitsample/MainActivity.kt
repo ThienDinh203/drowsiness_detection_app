@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts.*
 import net.simplifiedcoding.mlkitsample.databinding.ActivityMainBinding
 import net.simplifiedcoding.mlkitsample.facedetector.FaceDetectionActivity
-//import net.simplifiedcoding.mlkitsample.qrscanner.ScannerActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,11 +24,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-//        binding.buttonOpenScanner.setOnClickListener {
-//            this.action = Action.QR_SCANNER
-//            requestCameraAndStart()
-//        }
-
         binding.buttonFaceDetect.setOnClickListener {
             this.action = Action.FACE_DETECTION
             requestCameraAndStart()
@@ -46,7 +40,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun startCamera() {
         when (action) {
-//            Action.QR_SCANNER -> startScanner()
             Action.FACE_DETECTION -> FaceDetectionActivity.startActivity(this)
         }
     }
@@ -63,8 +56,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-//    private fun startScanner() {
-//        ScannerActivity.startScanner(this)
-//    }
 }

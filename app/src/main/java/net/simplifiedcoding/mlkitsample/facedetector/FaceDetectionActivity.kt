@@ -1,6 +1,5 @@
 package net.simplifiedcoding.mlkitsample.facedetector
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -38,15 +37,9 @@ class FaceDetectionActivity : AppCompatActivity() {
     private lateinit var cameraPreview: Preview
     private lateinit var imageAnalysis: ImageAnalysis
     private lateinit var drowsinessClassifier: DrowsinessClassifier
-
-//    private var awakeCount = 0
-//    private var drowsyCount = 0
-//    private val frameScores = mutableListOf<Double>()  // Holds 10–12 recent scores
-    private val maxWindowSize = 12
-    private var ema = 0.0;
+    private var ema = 0.0
     private val alpha = 0.25
     private val emaThreshold = 0.5
-    private val frameStates = mutableListOf<String>()
     private var mediaPlayer: MediaPlayer? = null
 
     private val cameraXViewModel = viewModels<CameraXViewModel>()
@@ -106,60 +99,6 @@ class FaceDetectionActivity : AppCompatActivity() {
             Log.e(TAG, illegalArgumentException.message ?: "IllegalArgumentException")
         }
     }
-/*
-    @OptIn(ExperimentalGetImage::class)
-    private fun processImageProxy(detector: FaceDetector, imageProxy: ImageProxy) {
-        val inputImage = InputImage.fromMediaImage(imageProxy.image!!, imageProxy.imageInfo.rotationDegrees)
-
-        detector.process(inputImage)
-            .addOnSuccessListener { faces ->
-                binding.graphicOverlay.clear()
-
-                faces.forEach { face ->
-                    val faceBitmap = cropFaceFromImage(imageProxy.toBitmap(), face.boundingBox)
-                    val status = drowsinessClassifier.classify(faceBitmap)  // e.g., "Awake (91%)" or "Drowsy (78%)"
-
-                    val simpleStatus = if (status.contains("Drowsy")) "Drowsy" else "Awake"
-                    frameStates.add(simpleStatus)
-                    var displayLabel = status
-                    // Check status after 5 frames
-                    if (frameStates.size > 4) {
-                        val drowsyCount = frameStates.count { it == "Drowsy" }
-                        val awakeCount = frameStates.count { it == "Awake" }
-                        val finalState = if (drowsyCount >= 3) "Drowsy" else "Awake"
-
-                        Log.d("FinalState", "After 5 frames => Drowsy: $drowsyCount, Awake: $awakeCount → Final: $finalState")
-                        displayLabel = finalState
-
-                        if (finalState == "Drowsy") {
-                            if (mediaPlayer == null) {
-                                mediaPlayer = MediaPlayer.create(this, R.raw.alarm3)
-                                mediaPlayer?.isLooping = false
-                            }
-                            if (mediaPlayer?.isPlaying == false) {
-                                mediaPlayer?.start()
-                            }
-                        } else {
-                            // Stop sound if Awake
-                            mediaPlayer?.pause()
-                            mediaPlayer?.seekTo(0)
-                        }
-                        // Keep sliding window of size 5
-                        frameStates.removeAt(0)
-                    }
-                    // Overlay result on screen
-                    val faceBox = FaceBox(binding.graphicOverlay, face, imageProxy.image!!.cropRect, displayLabel)
-                    binding.graphicOverlay.add(faceBox)
-                }
-            }
-            .addOnFailureListener {
-                it.printStackTrace()
-            }
-            .addOnCompleteListener {
-                imageProxy.close()
-            }
-    }
-    */
 
     @OptIn(ExperimentalGetImage::class)
     private fun processImageProxy(detector: FaceDetector, imageProxy: ImageProxy) {
